@@ -84,6 +84,33 @@ function formatNumber(num) {
 }
 
 /**
+ * Đọc file Excel và trả về workbook gốc (giữ nguyên định dạng, cấu trúc)
+ * @param {File} file - File Excel cần đọc
+ * @returns {Promise<{workbook: object, sheetName: string, rows: Array<Array>}>}
+ */
+async function readExcelWorkbook(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            try {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheetName = workbook.SheetNames[0];
+                const sheet = workbook.Sheets[firstSheetName];
+                const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+                resolve({ workbook, sheetName: firstSheetName, rows });
+            } catch (err) {
+                reject(err);
+            }
+        };
+        reader.onerror = function (err) {
+            reject(err);
+        };
+        reader.readAsArrayBuffer(file);
+    });
+}
+
+/**
  * Tạo file Excel mới từ mảng 2 chiều và tải xuống
  * @param {Array<Array>} data - Mảng 2 chiều dữ liệu
  * @param {string} filename - Tên file xuất ra
@@ -93,4 +120,47 @@ function downloadExcel(data, filename) {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Hóa đơn GTGT');
     XLSX.writeFile(wb, filename);
+}
+
+/**
+ * Xuất file dựa trên file mẫu gốc: giữ nguyên phần đầu (hướng dẫn + header)
+ * và điền dữ liệu hóa đơn thay thế vào từ dòng dữ liệu đầu tiên.
+ * @param {object} mauWorkbook - Workbook của file mẫu gốc
+ * @param {string} mauSheetName - Tên sheet của file mẫu
+ * @param {Array<Array>} dataRows - Các dòng dữ liệu hóa đơn thay thế (chỉ phần dữ liệu)
+ * @param {string} filename - Tên file xuất ra
+ */
+function downloadExcelFromTemplate(mauWorkbook, mauSheetName, dataRows, filename) {
+    // Lấy sheet gốc của file mẫu
+    const ws = mauWorkbook.Sheets[mauSheetName];
+
+    // Xóa toàn bộ dữ liệu cũ từ dòng 10 trở đi (dòng dữ liệu mẫu)
+    const range = XLSX.utils.decode_range(ws['!ref']);
+    for (let r = 9; r <= range.e.r; r++) {
+        for (let c = 0; c <= range.e.c; c++) {
+            const addr = XLSX.utils.encode_cell({ r: r, c: c });
+            delete ws[addr];
+        }
+    }
+
+    // Điền dữ liệu mới từ dòng 10 (index 9)
+    dataRows.forEach((row, idx) => {
+        const r = 9 + idx;
+        row.forEach((val, c) => {
+            if (val !== '' && val !== undefined && val !== null) {
+                const addr = XLSX.utils.encode_cell({ r: r, c: c });
+                ws[addr] = { t: typeof val === 'number' ? 'n' : 's', v: val };
+            }
+        });
+    });
+
+    // Cập nhật phạm vi dữ liệu
+    const newLastRow = 9 + dataRows.length - 1;
+    ws['!ref'] = XLSX.utils.encode_range({
+        s: { r: 0, c: 0 },
+        e: { r: Math.max(newLastRow, range.e.r), c: range.e.c }
+    });
+
+    // Xuất file
+    XLSX.writeFile(mauWorkbook, filename);
 }

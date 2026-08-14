@@ -10,8 +10,12 @@
 let soBanHangData = [];      // Dữ liệu sổ chi tiết bán hàng
 let danhSachHangData = [];   // Dữ liệu danh sách hàng hóa
 let danhSachHangMap = {};    // Map mã hàng hóa -> thuế suất chuẩn
+let danhSachHangDvtMap = {}; // Map mã hàng hóa -> đơn vị tính chuẩn
 let hoaDonSaiList = [];      // Danh sách hóa đơn bị sai
 let chiTietSaiList = [];     // Chi tiết các dòng hàng sai
+let mauWorkbook = null;      // Workbook của file mẫu hóa đơn thay thế
+let mauSheetName = '';       // Tên sheet của file mẫu
+let mauRows = [];            // Dữ liệu dòng của file mẫu
 
 // ===== Cấu trúc file mẫu hóa đơn thay thế =====
 const MAU_HOA_DON_HEADER = [
@@ -43,6 +47,7 @@ const MAU_HOA_DON_HEADER = [
 document.addEventListener('DOMContentLoaded', function () {
     const fileSoBanHang = document.getElementById('fileSoBanHang');
     const fileDanhSachHang = document.getElementById('fileDanhSachHang');
+    const fileMau = document.getElementById('fileMau');
     const btnChay = document.getElementById('btnChay');
     const btnTaiFile = document.getElementById('btnTaiFile');
 
@@ -64,6 +69,15 @@ document.addEventListener('DOMContentLoaded', function () {
         checkReady();
     });
 
+    fileMau.addEventListener('change', function (e) {
+        const file = e.target.files[0];
+        if (file) {
+            document.getElementById('statusMau').textContent = '✓ ' + file.name;
+            document.getElementById('statusMau').classList.add('loaded');
+        }
+        checkReady();
+    });
+
     btnChay.addEventListener('click', handleChaySoSanh);
     btnTaiFile.addEventListener('click', handleTaiFile);
 });
@@ -71,23 +85,31 @@ document.addEventListener('DOMContentLoaded', function () {
 function checkReady() {
     const fileSoBanHang = document.getElementById('fileSoBanHang').files[0];
     const fileDanhSachHang = document.getElementById('fileDanhSachHang').files[0];
-    document.getElementById('btnChay').disabled = !(fileSoBanHang && fileDanhSachHang);
+    const fileMau = document.getElementById('fileMau').files[0];
+    document.getElementById('btnChay').disabled = !(fileSoBanHang && fileDanhSachHang && fileMau);
 }
 
 // ===== Xử lý chạy so sánh =====
 async function handleChaySoSanh() {
     const fileSoBanHang = document.getElementById('fileSoBanHang').files[0];
     const fileDanhSachHang = document.getElementById('fileDanhSachHang').files[0];
+    const fileMau = document.getElementById('fileMau').files[0];
 
-    if (!fileSoBanHang || !fileDanhSachHang) {
-        alert('Vui lòng chọn đủ 2 file!');
+    if (!fileSoBanHang || !fileDanhSachHang || !fileMau) {
+        alert('Vui lòng chọn đủ 3 file (Sổ bán hàng, Danh sách hàng hóa, File mẫu)!');
         return;
     }
 
     try {
-        // Đọc 2 file
+        // Đọc 3 file
         soBanHangData = await readExcelFile(fileSoBanHang);
         danhSachHangData = await readExcelFile(fileDanhSachHang);
+
+        // Đọc file mẫu (giữ nguyên workbook để xuất đúng định dạng)
+        const mau = await readExcelWorkbook(fileMau);
+        mauWorkbook = mau.workbook;
+        mauSheetName = mau.sheetName;
+        mauRows = mau.rows;
 
         // Xây dựng map mã hàng hóa -> thuế suất chuẩn
         buildDanhSachHangMap();
@@ -104,20 +126,26 @@ async function handleChaySoSanh() {
 }
 
 /**
- * Xây dựng map mã hàng hóa -> thuế suất chuẩn từ danh sách hàng hóa
+ * Xây dựng map mã hàng hóa -> thuế suất chuẩn và đơn vị tính từ danh sách hàng hóa
  * Dữ liệu bắt đầu từ dòng 4 (index 3)
  * Cột 2 (index 1): Mã hàng hóa
+ * Cột 5 (index 4): Đơn vị tính
  * Cột 8 (index 7): Thuế suất (%)
  */
 function buildDanhSachHangMap() {
     danhSachHangMap = {};
+    danhSachHangDvtMap = {};
     for (let i = 3; i < danhSachHangData.length; i++) {
         const row = danhSachHangData[i];
         if (!row || row.length < 8) continue;
         const maHang = String(row[1] || '').trim();
         const thueSuat = parseTaxRate(row[7]);
+        const donViTinh = String(row[4] || '').trim();
         if (maHang) {
             danhSachHangMap[maHang] = thueSuat;
+            if (donViTinh) {
+                danhSachHangDvtMap[maHang] = donViTinh;
+            }
         }
     }
 }
@@ -149,7 +177,11 @@ function compareTaxRate() {
         const soHoaDon = String(row[2] || '').trim();
         const maHang = String(row[3] || '').trim();
         const tenHang = String(row[4] || '').trim();
-        const donViTinh = String(row[5] || '').trim();
+        let donViTinh = String(row[5] || '').trim();
+        // Nếu sổ bán hàng thiếu ĐVT, lấy từ danh sách hàng hóa theo mã hàng
+        if (!donViTinh && danhSachHangDvtMap[maHang]) {
+            donViTinh = danhSachHangDvtMap[maHang];
+        }
         const soLuong = parseNumber(row[6]);
         const donGia = parseNumber(row[7]);
         const thanhTien = parseNumber(row[8]);
@@ -302,37 +334,27 @@ function handleTaiFile() {
         return;
     }
 
-    // Tạo dữ liệu file theo mẫu
-    const data = buildHoaDonThayTheData();
+    if (!mauWorkbook) {
+        alert('Vui lòng chọn file mẫu hóa đơn thay thế!');
+        return;
+    }
 
-    // Xuất file
-    downloadExcel(data, 'Hoa_don_thay_the.xlsx');
+    // Tạo dữ liệu file theo mẫu
+    const dataRows = buildHoaDonThayTheData();
+
+    // Xuất file dựa trên file mẫu gốc (giữ nguyên định dạng, cấu trúc)
+    downloadExcelFromTemplate(mauWorkbook, mauSheetName, dataRows, 'Hoa_don_thay_the.xlsx');
     alert(`Đã tạo file hóa đơn thay thế cho ${hoaDonSaiList.length} hóa đơn!`);
 }
 
 /**
- * Xây dựng dữ liệu file hóa đơn thay thế theo cấu trúc mẫu
- * Hàng 1-8: Hướng dẫn
- * Hàng 9: Tiêu đề cột
- * Hàng 10+: Dữ liệu
+ * Xây dựng dữ liệu hóa đơn thay thế (chỉ phần dữ liệu, bắt đầu từ dòng 10)
+ * Cấu trúc 22 cột theo file mẫu gốc
  */
 function buildHoaDonThayTheData() {
     const data = [];
 
-    // Hàng 1-8: Hướng dẫn (giữ nguyên như mẫu)
-    data.push(['File mẫu danh sách hóa đơn để nhập vào phần mềm']);
-    data.push(['Hướng dẫn:']);
-    data.push(['- Điền dữ liệu hóa đơn cần lập trên phần mềm vào các cột tương ứng trên file này']);
-    data.push(['- Các cột có dấu (*) là những cột bắt buộc']);
-    data.push(['- Nếu muốn nhập thêm thông tin khác, người dùng có thể tự thêm cột trên file này (VD: Mã khách hàng, Mã hàng, Tỷ lệ chiết khấu, Tiền chiết khấu,...)']);
-    data.push(['- Các dòng dữ liệu phía dưới chỉ là ví dụ minh họa']);
-    data.push([]);
-    data.push([]);
-
-    // Hàng 9: Tiêu đề cột
-    data.push(MAU_HOA_DON_HEADER);
-
-    // Hàng 10+: Dữ liệu hóa đơn thay thế
+    // Dữ liệu hóa đơn thay thế (bắt đầu từ dòng 10 của file mẫu)
     let stt = 1;
     hoaDonSaiList.forEach(hd => {
         hd.dongHang.forEach((d, idx) => {
@@ -345,11 +367,13 @@ function buildHoaDonThayTheData() {
             if (idx === 0) {
                 // Cột 2: Ngày hóa đơn
                 row[1] = hd.ngay;
+                // Cột 6: Người mua hàng - để "BÁN CHO NGƯỜI TIÊU DÙNG"
+                row[5] = 'BÁN CHO NGƯỜI TIÊU DÙNG';
                 // Cột 13: Số hóa đơn bị thay thế
                 row[12] = hd.soHoaDon;
                 // Cột 14: Ngày hóa đơn bị thay thế
                 row[13] = hd.ngay;
-                // Các cột 3-9, 10, 11, 12, 15 để trống (người dùng tự nhập)
+                // Các cột 3-5, 7-12, 15 để trống (người dùng tự nhập)
             }
 
             // Cột 16: Tên hàng hóa/dịch vụ
