@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chuyển Sao Kê Ngân Hàng → Sổ Doanh Thu Bán Hàng</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- SheetJS để đọc/ghi file Excel -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 Sổ Doanh Thu Bán Hàng</h1>
+            <p class="subtitle">Tự động tạo Sổ doanh thu bán hàng (Mẫu S2a-HKD) từ sao kê ngân hàng, doanh thu tiền mặt và bảng kê hóa đơn</p>
+        </header>
+
+        <!-- Bước 1: Thông tin HKD -->
+        <section class="card">
+            <div class="step-header">
+                <span class="step-num">1</span>
+                <h2>Thông tin Hộ Kinh Doanh</h2>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="tenHKD">Tên Hộ Kinh Doanh</label>
+                    <input type="text" id="tenHKD" placeholder="VD: HỘ KINH DOANH KEN JENDA">
+                </div>
+                <div class="form-group">
+                    <label for="maSoThue">Mã số thuế</label>
+                    <input type="text" id="maSoThue" placeholder="VD: 058199006712">
+                </div>
+                <div class="form-group">
+                    <label for="diaChi">Địa chỉ</label>
+                    <input type="text" id="diaChi" placeholder="VD: Số 31 Nguyễn Trường Tộ, Thôn 7, Xã Ninh Sơn, Tỉnh Khánh Hoà">
+                </div>
+                <div class="form-group">
+                    <label for="kyKeKhai">Kỳ kê khai</label>
+                    <input type="text" id="kyKeKhai" placeholder="VD: Quý 1/2026">
+                </div>
+                <div class="form-group">
+                    <label for="soHieu">Số hiệu (mặc định)</label>
+                    <input type="text" id="soHieu" value="2C26MKJ" placeholder="VD: 2C26MKJ">
+                </div>
+            </div>
+        </section>
+
+        <!-- Bước 2: Nguồn dữ liệu -->
+        <section class="card">
+            <div class="step-header">
+                <span class="step-num">2</span>
+                <h2>Nguồn dữ liệu</h2>
+            </div>
+            <p class="hint">Chọn ít nhất một nguồn dữ liệu để tạo sổ. Có thể kết hợp nhiều nguồn (sao kê + tiền mặt, hoặc chỉ bảng kê...).</p>
+
+            <div class="source-grid">
+                <!-- Sao kê ngân hàng -->
+                <div class="source-block">
+                    <h3>🏦 Sao kê ngân hàng</h3>
+                    <p class="hint">HKD không xuất hóa đơn — dùng sao kê ngân hàng để lấy doanh thu chuyển khoản.</p>
+                    <div class="upload-area" id="uploadArea">
+                        <input type="file" id="fileInput" accept=".xlsx,.xls" hidden>
+                        <div class="upload-content">
+                            <span class="upload-icon">📁</span>
+                            <p>Kéo thả file sao kê vào đây hoặc <span class="link">bấm để chọn</span></p>
+                            <p class="hint">Hỗ trợ .xlsx, .xls</p>
+                        </div>
+                    </div>
+                    <div id="fileInfo" class="file-info hidden"></div>
+                </div>
+
+                <!-- Doanh thu tiền mặt -->
+                <div class="source-block">
+                    <h3>💵 Doanh thu tiền mặt</h3>
+                    <p class="hint">HKD không xuất hóa đơn — nhập tổng tiền mặt, hệ thống tự phân bổ đều ra các ngày trong kỳ.</p>
+                    <button type="button" id="btnOpenCash" class="btn btn-cash">⚙️ Cấu hình tiền mặt</button>
+                    <div id="cashInfo" class="file-info hidden"></div>
+                </div>
+
+                <!-- Bảng kê hóa đơn GTGT -->
+                <div class="source-block">
+                    <h3>🧾 Bảng kê hóa đơn (GTGT)</h3>
+                    <p class="hint">HKD có xuất hóa đơn — dùng bảng kê hóa đơn bán ra (Phụ lục 01-1/GTGT). Hệ thống gom tổng tiền theo từng hóa đơn và xuất sổ với số hóa đơn thật.</p>
+                    <div class="upload-area" id="gtgtArea">
+                        <input type="file" id="gtgtInput" accept=".xlsx,.xls" hidden>
+                        <div class="upload-content">
+                            <span class="upload-icon">🧾</span>
+                            <p>Kéo thả file bảng kê GTGT vào đây hoặc <span class="link">bấm để chọn</span></p>
+                            <p class="hint">Hỗ trợ .xlsx, .xls</p>
+                        </div>
+                    </div>
+                    <div id="gtgtInfo" class="file-info hidden"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Bước 3: Cấu hình mapping (chỉ khi có sao kê) -->
+        <section class="card hidden" id="mappingSection">
+            <div class="step-header">
+                <span class="step-num">3</span>
+                <h2>Cấu hình Mapping</h2>
+            </div>
+            <div class="mapping-grid">
+                <div class="form-group">
+                    <label for="colDate">Cột Ngày giao dịch</label>
+                    <select id="colDate"></select>
+                </div>
+                <div class="form-group">
+                    <label for="colCredit">Cột Số tiền ghi có (Credit)</label>
+                    <select id="colCredit"></select>
+                </div>
+                <div class="form-group">
+                    <label for="colDebit">Cột Số tiền ghi nợ (Debit)</label>
+                    <select id="colDebit"></select>
+                </div>
+                <div class="form-group">
+                    <label for="colContent">Cột Nội dung chi tiết</label>
+                    <select id="colContent"></select>
+                </div>
+            </div>
+            <div class="filter-options">
+                <h3>Quy tắc lọc (mặc định theo yêu cầu):</h3>
+                <label class="checkbox">
+                    <input type="checkbox" id="filterDebit" checked>
+                    Loại bỏ các giao dịch ghi nợ (Debit)
+                </label>
+                <label class="checkbox">
+                    <input type="checkbox" id="filterInterest" checked>
+                    Loại bỏ giao dịch ghi có nhưng là "INTEREST PAYMENT" (lãi ngân hàng)
+                </label>
+            </div>
+        </section>
+
+        <!-- Bước 4: Xử lý & Xuất file -->
+        <section class="card">
+            <div class="step-header">
+                <span class="step-num">4</span>
+                <h2>Xử lý & Xuất file</h2>
+            </div>
+            <div class="action-row">
+                <button id="btnProcess" class="btn btn-primary" disabled>🔄 Tạo Sổ Doanh Thu</button>
+                <button id="btnExport" class="btn btn-success hidden">⬇️ Xuất file Excel</button>
+            </div>
+            <div id="resultSummary" class="result-summary hidden"></div>
+        </section>
+
+        <!-- Bảng xem trước -->
+        <section class="card hidden" id="previewSection">
+            <div class="step-header">
+                <span class="step-num">👁️</span>
+                <h2>Xem trước Sổ Doanh Thu</h2>
+            </div>
+            <div class="table-wrapper">
+                <table id="previewTable">
+                    <thead>
+                        <tr>
+                            <th>Số hiệu</th>
+                            <th>Hóa đơn</th>
+                            <th>Ngày, tháng</th>
+                            <th>Diễn giải</th>
+                            <th>Số tiền</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <!-- Popup cấu hình doanh thu tiền mặt -->
+    <div class="modal-overlay hidden" id="cashModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>💵 Cấu hình Doanh thu tiền mặt</h3>
+                <button type="button" class="modal-close" id="btnCloseCash" title="Đóng">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="cash-block">
+                    <h3 class="cash-block-title">💰 Số tiền & phân bổ</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="cashTotal">Tổng số tiền mặt (VNĐ)</label>
+                            <input type="number" id="cashTotal" min="0" step="1000" placeholder="VD: 200000000">
+                        </div>
+                        <div class="form-group">
+                            <label for="cashPeriod">Kỳ phân bổ</label>
+                            <select id="cashPeriod">
+                                <option value="month">Theo tháng</option>
+                                <option value="quarter" selected>Theo quý</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="cashStartDate">Ngày bắt đầu phân bổ</label>
+                            <input type="date" id="cashStartDate">
+                        </div>
+                        <div class="form-group">
+                            <label for="cashMin">Số tiền tối thiểu / giao dịch (VNĐ)</label>
+                            <input type="number" id="cashMin" min="0" step="1000" placeholder="VD: 100000">
+                        </div>
+                        <div class="form-group">
+                            <label for="cashMax">Số tiền tối đa / giao dịch (VNĐ)</label>
+                            <input type="number" id="cashMax" min="0" step="1000" placeholder="VD: 1000000">
+                        </div>
+                        <div class="form-group">
+                            <label for="cashMaxPerDay">Số giao dịch tối đa / ngày</label>
+                            <input type="number" id="cashMaxPerDay" min="1" step="1" value="3" placeholder="VD: 3">
+                        </div>
+                        <div class="form-group">
+                            <label for="cashRound">Bước làm tròn (VNĐ)</label>
+                            <input type="number" id="cashRound" min="1" step="1" value="1000" placeholder="VD: 1000">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cash-block">
+                    <h3 class="cash-block-title">📅 Ngày đóng cửa (không có doanh thu)</h3>
+                    <div class="offday-week">
+                        <span class="offday-label">Đóng cửa cố định theo thứ:</span>
+                        <label class="offday-check"><input type="checkbox" class="cashOffWeek" value="1"> Thứ 2</label>
+                        <label class="offday-check"><input type="checkbox" class="cashOffWeek" value="2"> Thứ 3</label>
+                        <label class="offday-check"><input type="checkbox" class="cashOffWeek" value="3"> Thứ 4</label>
+                        <label class="offday-check"><input type="checkbox" class="cashOffWeek" value="4"> Thứ 5</label>
+                        <label class="offday-check"><input type="checkbox" class="cashOffWeek" value="5"> Thứ 6</label>
+                        <label class="offday-check"><input type="checkbox" class="cashOffWeek" value="6"> Thứ 7</label>
+                        <label class="offday-check"><input type="checkbox" class="cashOffWeek" value="0"> Chủ nhật</label>
+                    </div>
+                    <div class="offday-dates">
+                        <span class="offday-label">Hoặc chọn ngày cụ thể:</span>
+                        <div class="offday-picker">
+                            <input type="date" id="cashOffDateInput">
+                            <button type="button" id="btnAddOffDate" class="btn btn-small">➕ Thêm ngày</button>
+                        </div>
+                        <div id="cashOffDateList" class="offday-chips"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="btnSaveCash" class="btn btn-primary">✅ Lưu cấu hình</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

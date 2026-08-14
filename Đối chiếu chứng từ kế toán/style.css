@@ -1,0 +1,693 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #f0f2f5;
+    color: #333;
+    padding: 20px;
+}
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+h1 {
+    text-align: center;
+    color: #1a73e8;
+    margin-bottom: 30px;
+    font-size: 28px;
+}
+
+/* ============================================================
+   Tabs
+   ============================================================ */
+
+.tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #e8e8e8;
+}
+
+.tab-btn {
+    padding: 12px 30px;
+    font-size: 16px;
+    font-weight: 600;
+    border: none;
+    background: none;
+    cursor: pointer;
+    color: #666;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+}
+
+.tab-btn.active {
+    color: #1a73e8;
+    border-bottom-color: #1a73e8;
+}
+
+.tab-btn:hover:not(.active) {
+    color: #333;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* Main tabs (3 tabs chính) */
+.main-tabs .tab-btn {
+    font-size: 17px;
+    padding: 14px 24px;
+}
+
+.main-tabs .tab-btn.active {
+    color: #1a73e8;
+    border-bottom-color: #1a73e8;
+    background: rgba(26, 115, 232, 0.05);
+}
+
+/* Sub-tabs (Bán ra / Mua vào trong tab So sánh) */
+.sub-tabs {
+    margin-left: 0;
+    margin-top: -10px;
+}
+
+.sub-tabs .tab-btn {
+    font-size: 14px;
+    padding: 10px 20px;
+}
+
+.sub-tabs .tab-btn.active {
+    color: #34a853;
+    border-bottom-color: #34a853;
+}
+
+/* ============================================================
+   Upload Section
+   ============================================================ */
+
+.upload-section {
+    margin-bottom: 30px;
+}
+
+.upload-group {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.upload-group h3 {
+    margin-bottom: 8px;
+    color: #333;
+    font-size: 18px;
+}
+
+.upload-hint {
+    color: #888;
+    font-size: 13px;
+    margin-bottom: 16px;
+}
+
+/* ============================================================
+   Drop Zone
+   ============================================================ */
+
+.drop-zone {
+    border: 2px dashed #ccc;
+    border-radius: 10px;
+    padding: 30px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    background: #fafafa;
+    margin-bottom: 16px;
+}
+
+.drop-zone:hover {
+    border-color: #1a73e8;
+    background: #f0f6ff;
+}
+
+.drop-zone.drag-over {
+    border-color: #1a73e8;
+    background: #e8f0fe;
+    transform: scale(1.01);
+}
+
+.drop-zone-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.drop-icon {
+    font-size: 40px;
+    margin-bottom: 8px;
+}
+
+.drop-zone-content span {
+    font-size: 15px;
+    color: #555;
+}
+
+.drop-zone-content strong {
+    color: #1a73e8;
+}
+
+.drop-hint {
+    font-size: 12px !important;
+    color: #999 !important;
+}
+
+/* ============================================================
+   File List
+   ============================================================ */
+
+.file-list {
+    margin-bottom: 16px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.file-list-empty {
+    text-align: center;
+    color: #aaa;
+    padding: 16px;
+    font-size: 14px;
+}
+
+.file-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    margin-bottom: 6px;
+    font-size: 14px;
+    transition: background 0.2s;
+}
+
+.file-item-ok {
+    background: #e6f4ea;
+    border-left: 4px solid #34a853;
+}
+
+.file-item-unknown {
+    background: #fce8e6;
+    border-left: 4px solid #ea4335;
+}
+
+.file-icon {
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.file-name {
+    font-weight: 500;
+    color: #333;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.file-type {
+    font-size: 12px;
+    color: #666;
+    background: rgba(0,0,0,0.05);
+    padding: 3px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.file-remove {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #999;
+    font-size: 16px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.file-remove:hover {
+    background: rgba(0,0,0,0.1);
+    color: #c5221f;
+}
+
+/* ============================================================
+   Compare Button
+   ============================================================ */
+
+.btn-compare {
+    display: block;
+    margin: 0 auto;
+    padding: 14px 50px;
+    font-size: 18px;
+    font-weight: 600;
+    background: #1a73e8;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-compare:hover:not(:disabled) {
+    background: #1557b0;
+    transform: translateY(-1px);
+}
+
+.btn-compare:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+/* ============================================================
+   Results
+   ============================================================ */
+
+.results {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    margin-top: 20px;
+}
+
+.results h2 {
+    margin-bottom: 16px;
+    color: #333;
+    font-size: 20px;
+}
+
+/* ============================================================
+   Summary
+   ============================================================ */
+
+.summary {
+    margin-bottom: 20px;
+}
+
+.source-info {
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 12px;
+    padding: 8px 12px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    display: inline-block;
+}
+
+.summary-items {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.summary-item {
+    padding: 14px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    min-width: 140px;
+    text-align: center;
+    font-size: 15px;
+}
+
+.summary-item.total {
+    background: #e8f0fe;
+    color: #1a73e8;
+}
+
+.summary-item.match {
+    background: #e6f4ea;
+    color: #137333;
+}
+
+.summary-item.mismatch {
+    background: #fce8e6;
+    color: #c5221f;
+}
+
+.summary-item.missing {
+    background: #fef7e0;
+    color: #ea8600;
+}
+
+.summary-item.duplicate {
+    background: #e8f0fe;
+    color: #1a73e8;
+    border: 1px solid #1a73e8;
+}
+
+/* ============================================================
+   Summary Warning (kiểm tra file gốc vs tính toán)
+   ============================================================ */
+
+.summary-warning {
+    padding: 12px 16px;
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    font-size: 13px;
+    color: #856404;
+    line-height: 1.6;
+}
+
+.summary-warning strong {
+    color: #533f03;
+}
+
+/* ============================================================
+   Summary Info (tổng số BK, HD, HĐ thay thế)
+   ============================================================ */
+
+.summary-info {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+    padding: 10px 14px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e8e8e8;
+}
+
+.summary-info-item {
+    font-size: 14px;
+    color: #555;
+    padding: 4px 10px;
+    background: white;
+    border-radius: 6px;
+    border: 1px solid #e0e0e0;
+}
+
+.summary-info-item strong {
+    color: #333;
+}
+
+.summary-info-item.clickable {
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.summary-info-item.clickable:hover {
+    background: #e8f0fe;
+    border-color: #1a73e8;
+}
+
+/* ============================================================
+   Summary Totals (tổng số tiền BK, HD, chênh lệch)
+   ============================================================ */
+
+.summary-totals {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+    padding: 14px 18px;
+    background: linear-gradient(135deg, #e8f0fe, #f0f6ff);
+    border-radius: 10px;
+    border: 1px solid #c5d9f2;
+}
+
+.summary-totals-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.summary-total-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 8px 16px;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    flex: 1;
+    min-width: 180px;
+}
+
+.summary-total-item .total-label {
+    font-size: 12px;
+    color: #888;
+    font-weight: 500;
+}
+
+.summary-total-item .total-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1a73e8;
+}
+
+.summary-total-item .total-value.amount-diff {
+    color: #c5221f;
+}
+
+.summary-total-item.clickable {
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.summary-total-item.clickable:hover {
+    background: #fce8e6;
+    border-color: #c5221f;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(197, 34, 31, 0.15);
+}
+
+/* ============================================================
+   Detail Table
+   ============================================================ */
+
+.detail-table {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+th, td {
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 1px solid #e8e8e8;
+    white-space: nowrap;
+}
+
+th {
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #555;
+    position: sticky;
+    top: 0;
+}
+
+tr:hover {
+    background: #f5f5f5;
+}
+
+tr.match {
+    background: #e6f4ea;
+}
+
+tr.mismatch {
+    background: #fce8e6;
+}
+
+tr.mismatch:hover {
+    background: #f8d7da;
+}
+
+tr.missing-in-bangke {
+    background: #fff3cd;
+}
+
+tr.missing-in-hoadon {
+    background: #f8d7da;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.status-badge.ok {
+    background: #e6f4ea;
+    color: #137333;
+}
+
+.status-badge.warning {
+    background: #fce8e6;
+    color: #c5221f;
+}
+
+.status-badge.missing {
+    background: #fef7e0;
+    color: #ea8600;
+}
+
+.hd-type-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 500;
+    background: #e8f0fe;
+    color: #1a73e8;
+    white-space: nowrap;
+}
+
+.amount-diff {
+    color: #c5221f;
+    font-weight: 600;
+}
+
+/* ============================================================
+   Modal
+   ============================================================ */
+
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-overlay.active {
+    display: flex;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 12px;
+    max-width: 90vw;
+    max-height: 85vh;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    border-bottom: 1px solid #e8e8e8;
+    flex-shrink: 0;
+}
+
+.modal-header h3 {
+    font-size: 18px;
+    color: #333;
+    margin: 0;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: #999;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.modal-close:hover {
+    background: #f0f0f0;
+    color: #333;
+}
+
+.modal-body {
+    padding: 20px 24px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.modal-body table {
+    font-size: 13px;
+}
+
+.modal-body table th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+/* ============================================================
+   Responsive
+   ============================================================ */
+
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+
+    h1 {
+        font-size: 22px;
+    }
+
+    .tab-btn {
+        padding: 10px 16px;
+        font-size: 14px;
+    }
+
+    .drop-zone {
+        padding: 20px;
+    }
+
+    .drop-icon {
+        font-size: 30px;
+    }
+
+    .summary-items {
+        flex-direction: column;
+    }
+
+    .summary-item {
+        min-width: auto;
+    }
+
+    .btn-compare {
+        padding: 12px 30px;
+        font-size: 16px;
+    }
+
+    .file-item {
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .file-type {
+        font-size: 11px;
+    }
+}

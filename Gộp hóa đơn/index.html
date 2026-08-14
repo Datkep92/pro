@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Gộp Hóa Đơn Chuyên Nghiệp</title>
+    <style>
+        :root {
+            --primary: #1e40af;
+            --secondary: #3b82f6;
+            --success: #059669;
+            --bg: #f1f5f9;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', 'Segoe UI', sans-serif; }
+        body { background-color: var(--bg); padding: 20px; color: #1e293b; }
+        .container { max-width: 1300px; margin: 0 auto; background: white; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); padding: 30px; }
+        
+        header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #e2e8f0; padding-bottom: 20px; }
+        h1 { color: var(--primary); font-size: 24px; display: flex; align-items: center; justify-content: center; gap: 12px; }
+        
+        .upload-zone { border: 2px dashed #94a3b8; border-radius: 12px; padding: 40px; text-align: center; background: #f8fafc; cursor: pointer; transition: 0.3s; margin-bottom: 25px; }
+        .upload-zone:hover { border-color: var(--secondary); background: #eff6ff; }
+        .upload-zone i { font-size: 48px; color: var(--secondary); margin-bottom: 10px; }
+
+        .stats-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: white; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; text-align: center; transition: 0.3s; }
+        .stat-card:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        .stat-val { font-size: 24px; font-weight: 800; color: var(--primary); display: block; }
+        .stat-label { font-size: 13px; color: #64748b; text-transform: uppercase; font-weight: 600; margin-top: 5px; }
+
+        .preview-box { border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background: white; }
+        .preview-header { background: #f8fafc; padding: 15px 20px; border-bottom: 1px solid #e2e8f0; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
+        .table-res { overflow-x: auto; max-height: 450px; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th { background: #1e293b; color: white; padding: 14px; text-align: left; white-space: nowrap; position: sticky; top: 0; z-index: 10; }
+        td { padding: 12px; border-bottom: 1px solid #f1f5f9; white-space: nowrap; color: #334155; }
+        tr:nth-child(even) { background-color: #f8fafc; }
+        tr:hover { background-color: #f1f5f9; }
+
+        .actions { display: flex; gap: 20px; justify-content: center; margin-top: 30px; }
+        .btn { padding: 14px 35px; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: 0.3s; font-size: 15px; }
+        .btn-export { background: var(--success); color: white; box-shadow: 0 4px 14px rgba(5, 150, 105, 0.3); }
+        .btn-export:hover { background: #047857; transform: scale(1.02); }
+        .btn-clear { background: #94a3b8; color: white; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+        #loading { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 1000; justify-content: center; align-items: center; flex-direction: column; }
+        .spinner { width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid var(--secondary); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+<div id="loading"><div class="spinner"></div><p style="margin-top:15px; font-weight:bold;">Đang xử lý dữ liệu...</p></div>
+
+<div class="container">
+    <header>
+        <h1><i class="fas fa-file-invoice-dollar"></i> GỘP HÓA ĐƠN ĐẦU VÀO CỤC THUẾ</h1>
+    </header>
+
+    <div class="upload-zone" onclick="document.getElementById('fileInput').click()" id="dropArea">
+        <i class="fas fa-file-excel"></i>
+        <p style="font-size: 18px; font-weight: 500;">Kéo thả nhiều file vào đây hoặc Click để chọn</p>
+        <p style="font-size: 13px; color: #64748b; margin-top: 5px;">Hỗ trợ .xlsx, .xls, .csv</p>
+        <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" multiple style="display: none">
+    </div>
+
+    <div class="stats-container">
+        <div class="stat-card"><span class="stat-val" id="countFiles">0</span><span class="stat-label">Số File đã chọn</span></div>
+        <div class="stat-card"><span class="stat-val" id="countInvoices">0</span><span class="stat-label">Tổng số hóa đơn</span></div>
+        <div class="stat-card"><span class="stat-val" id="countRows">0</span><span class="stat-label">Tổng số dòng</span></div>
+        <div class="stat-card"><span class="stat-val" id="sumTotal">0 đ</span><span class="stat-label">Tổng tiền thanh toán</span></div>
+    </div>
+
+    <div class="preview-box" id="previewBox" style="display: none;">
+        <div class="preview-header">
+            <span><i class="fas fa-list-ul"></i> XEM TRƯỚC DỮ LIỆU</span>
+            <span id="previewInfo" style="font-size: 13px; font-weight: normal; color: var(--secondary);"></span>
+        </div>
+        <div class="table-res">
+            <table id="tblPreview">
+                <thead><tr id="thr"></tr></thead>
+                <tbody id="tbr"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="actions">
+        <button class="btn btn-export" id="btnExport" disabled><i class="fas fa-download"></i> XUẤT FILE EXCEL ĐÃ GỘP</button>
+        <button class="btn btn-clear" id="btnClear" disabled><i class="fas fa-redo"></i> LÀM MỚI</button>
+    </div>
+</div>
+
+<script>
+    let allData = [];
+    let fileCount = 0;
+    const COLUMNS = [
+        "STT", "Ký hiệu mẫu số", "Ký hiệu hóa đơn", "Số hóa đơn", "Ngày lập",
+        "MST người bán/MST người xuất hàng", "Tên người bán/Tên người xuất hàng", "Địa chỉ người bán",
+        "MST người mua/MST người nhận hàng", "Tên người mua/Tên người nhận hàng",
+        "Tổng tiền chưa thuế", "Tổng tiền thuế", "Tổng tiền chiết khấu thương mại",
+        "Tổng tiền phí", "Tổng tiền thanh toán", "Đơn vị tiền tệ", "Tỷ giá",
+        "Trạng thái hóa đơn", "Kết quả kiểm tra hóa đơn"
+    ];
+
+    const fInput = document.getElementById('fileInput');
+    const loading = document.getElementById('loading');
+
+    fInput.onchange = async (e) => {
+        const files = Array.from(e.target.files);
+        if(!files.length) return;
+        
+        loading.style.display = 'flex';
+        fileCount += files.length;
+        
+        for (const file of files) {
+            await parseExcel(file);
+        }
+        
+        renderUI();
+        loading.style.display = 'none';
+        fInput.value = '';
+    };
+
+    async function parseExcel(file) {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const workbook = XLSX.read(e.target.result, { type: 'array' });
+                const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+                
+                let headIdx = -1;
+                for(let i=0; i<rows.length; i++){
+                    const str = rows[i].join('|').toLowerCase();
+                    if(str.includes('số hóa đơn') || str.includes('stt')){ headIdx = i; break; }
+                }
+
+                if(headIdx !== -1) {
+                    const headers = rows[headIdx].map(h => String(h || '').trim());
+                    for(let i = headIdx + 1; i < rows.length; i++) {
+                        const r = rows[i];
+                        if(!r || r.length < 5) continue;
+                        const rStr = r.join('|').toLowerCase();
+                        if(rStr.includes('danh sách hóa đơn') || rStr.includes('số hóa đơn')) continue;
+
+                        let obj = {};
+                        headers.forEach((h, idx) => { if(h && !h.startsWith('__EMPTY')) obj[h] = r[idx]; });
+                        
+                        // Kiểm tra dòng hợp lệ (phải có số hóa đơn hoặc tiền)
+                        if(obj['Số hóa đơn'] || obj['Tổng tiền thanh toán']) {
+                            allData.push(obj);
+                        }
+                    }
+                }
+                resolve();
+            };
+            reader.readAsArrayBuffer(file);
+        });
+    }
+
+    function renderUI() {
+        // Đánh lại STT liên tục
+        allData.forEach((d, i) => d['STT'] = i + 1);
+
+        document.getElementById('countFiles').innerText = fileCount;
+        document.getElementById('countRows').innerText = allData.length;
+        
+        // Thống kê số lượng hóa đơn duy nhất
+        const uniqueInvoices = new Set(allData.map(d => d['Số hóa đơn']).filter(s => s));
+        document.getElementById('countInvoices').innerText = uniqueInvoices.size;
+
+        let total = 0;
+        allData.forEach(d => total += parseFloat(d['Tổng tiền thanh toán']) || 0);
+        document.getElementById('sumTotal').innerText = new Intl.NumberFormat('vi-VN').format(total) + " đ";
+
+        // Table Preview
+        const thr = document.getElementById('thr');
+        const tbr = document.getElementById('tbr');
+        thr.innerHTML = COLUMNS.map(c => `<th>${c}</th>`).join('');
+        tbr.innerHTML = allData.slice(0, 30).map(row => 
+            `<tr>${COLUMNS.map(c => `<td>${row[c] || ''}</td>`).join('')}</tr>`
+        ).join('');
+
+        document.getElementById('previewBox').style.display = allData.length ? 'block' : 'none';
+        document.getElementById('previewInfo').innerText = `Đang hiển thị 30/${allData.length} dòng dữ liệu mới nhất`;
+        document.getElementById('btnExport').disabled = !allData.length;
+        document.getElementById('btnClear').disabled = !allData.length;
+    }
+
+    document.getElementById('btnClear').onclick = () => {
+        allData = []; fileCount = 0; renderUI();
+    };
+
+    document.getElementById('btnExport').onclick = () => {
+        // Chuẩn hóa dữ liệu trước khi xuất (ép kiểu số cho các cột tiền)
+        const exportData = allData.map(row => {
+            let newRow = {};
+            COLUMNS.forEach(c => {
+                let val = row[c];
+                // Nếu là cột tiền, chuyển sang số để Excel nhận diện đẹp
+                if(c.includes('Tổng tiền') || c === 'Tỷ giá') {
+                    newRow[c] = (val === "" || val === undefined) ? 0 : parseFloat(val);
+                } else {
+                    newRow[c] = val || "";
+                }
+            });
+            return newRow;
+        });
+
+        const ws = XLSX.utils.json_to_sheet(exportData, { header: COLUMNS });
+        
+        // Tự động căn chỉnh độ rộng cột cực đẹp
+        const wscols = COLUMNS.map(col => {
+            let max = col.length;
+            exportData.slice(0, 200).forEach(row => {
+                const s = String(row[col] || "");
+                if(s.length > max) max = s.length;
+            });
+            return { wch: max + 4 };
+        });
+        ws['!cols'] = wscols;
+
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "HOA_DON_TONG_HOP");
+        
+        const fileName = `DULIEU_GOP_${new Date().toLocaleDateString('vi-VN').replace(/\//g,'-')}.xlsx`;
+        XLSX.writeFile(wb, fileName);
+    };
+
+    // Drag Drop
+    const da = document.getElementById('dropArea');
+    da.ondragover = (e) => { e.preventDefault(); da.style.borderColor = "var(--secondary)"; };
+    da.ondragleave = () => { da.style.borderColor = "#94a3b8"; };
+    da.ondrop = (e) => {
+        e.preventDefault();
+        da.style.borderColor = "#94a3b8";
+        fInput.files = e.dataTransfer.files;
+        fInput.dispatchEvent(new Event('change'));
+    };
+</script>
+</body>
+</html>

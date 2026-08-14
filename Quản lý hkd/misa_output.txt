@@ -1,0 +1,17 @@
+[
+  [
+    "STT",
+    "Mã hàng",
+    "Tên Hàng Hóa"
+  ],
+  [
+    1,
+    "BDLDK20W",
+    "Bóng đèn led búp trụ nhựa model DK-20W (Led bulb DK 20W - VNS"
+  ],
+  [
+    2,
+    "KO110",
+    "Kem ốc Quế Dâu Nam Việt Quấ"
+  ]
+]

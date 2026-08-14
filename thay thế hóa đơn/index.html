@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tool Phát Hiện Hóa Đơn Sai Thuế Suất & Tạo Hóa Đơn Thay Thế</title>
+    <link rel="stylesheet" href="css/style.css">
+    <!-- SheetJS để đọc/ghi file Excel -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🧾 Tool Phát Hiện Hóa Đơn Sai Thuế Suất</h1>
+            <p class="subtitle">Tự động so sánh thuế suất giữa Sổ chi tiết bán hàng và Danh sách hàng hóa, tạo hóa đơn thay thế cho các hóa đơn bị sai.</p>
+        </header>
+
+        <!-- Bước 1: Upload file -->
+        <section class="card upload-section">
+            <h2>📁 Bước 1: Chọn file dữ liệu</h2>
+            <div class="upload-grid">
+                <div class="upload-item">
+                    <label for="fileSoBanHang">Sổ chi tiết bán hàng (*.xlsx)</label>
+                    <input type="file" id="fileSoBanHang" accept=".xlsx,.xls" class="file-input">
+                    <div class="file-status" id="statusSoBanHang">Chưa chọn file</div>
+                </div>
+                <div class="upload-item">
+                    <label for="fileDanhSachHang">Danh sách hàng hóa (*.xlsx)</label>
+                    <input type="file" id="fileDanhSachHang" accept=".xlsx,.xls" class="file-input">
+                    <div class="file-status" id="statusDanhSachHang">Chưa chọn file</div>
+                </div>
+            </div>
+            <button id="btnChay" class="btn btn-primary" disabled>🔍 Chạy so sánh thuế suất</button>
+        </section>
+
+        <!-- Bước 2: Kết quả -->
+        <section class="card result-section" id="resultSection" style="display:none;">
+            <h2>📊 Bước 2: Kết quả so sánh</h2>
+            <div class="summary-box" id="summaryBox"></div>
+            <div class="table-wrapper">
+                <table id="resultTable">
+                    <thead>
+                        <tr>
+                            <th>STT</th>
+                            <th>Số hóa đơn</th>
+                            <th>Ngày</th>
+                            <th>Mã đơn hàng</th>
+                            <th>Số dòng sai</th>
+                            <th>Chi tiết dòng sai</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultBody"></tbody>
+                </table>
+            </div>
+            <button id="btnTaiFile" class="btn btn-success">⬇️ Tải file hóa đơn thay thế (.xlsx)</button>
+        </section>
+
+        <!-- Bước 3: Chi tiết -->
+        <section class="card detail-section" id="detailSection" style="display:none;">
+            <h2>🔎 Chi tiết dòng hàng sai thuế suất</h2>
+            <div class="table-wrapper">
+                <table id="detailTable">
+                    <thead>
+                        <tr>
+                            <th>Số hóa đơn</th>
+                            <th>Mã hàng hóa</th>
+                            <th>Tên hàng hóa</th>
+                            <th>Thuế suất tính được</th>
+                            <th>Thuế suất chuẩn</th>
+                            <th>Trạng thái</th>
+                        </tr>
+                    </thead>
+                    <tbody id="detailBody"></tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <script src="js/excel.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

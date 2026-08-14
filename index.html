@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Kế Toán HKD - Tổng Hợp</title>
+    <style>
+        :root {
+            --primary: #1e40af;
+            --primary-light: #3b82f6;
+            --bg: #f1f5f9;
+            --header-bg: #1e293b;
+            --header-text: #f8fafc;
+            --tab-active: #ffffff;
+            --tab-inactive: #334155;
+            --tab-hover: #475569;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', 'Inter', sans-serif; }
+        html, body { height: 100%; }
+        body { background-color: var(--bg); display: flex; flex-direction: column; }
+
+        /* ===== HEADER ===== */
+        .app-header {
+            background: var(--header-bg);
+            color: var(--header-text);
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+        .app-header .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 20px;
+            font-weight: 700;
+        }
+        .app-header .brand .logo {
+            width: 36px;
+            height: 36px;
+            background: var(--primary-light);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+        .app-header .subtitle {
+            font-size: 12px;
+            color: #94a3b8;
+            font-weight: 400;
+        }
+
+        /* ===== TABS (ngang trên) ===== */
+        .tab-bar {
+            background: var(--header-bg);
+            border-top: 1px solid #334155;
+            display: flex;
+            overflow-x: auto;
+            padding: 0 12px;
+            z-index: 9;
+        }
+        .tab-bar::-webkit-scrollbar { height: 4px; }
+        .tab-bar::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        .tab-btn {
+            background: transparent;
+            border: none;
+            color: #cbd5e1;
+            padding: 14px 22px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .tab-btn:hover { background: var(--tab-hover); color: #fff; }
+        .tab-btn.active {
+            background: var(--tab-active);
+            color: var(--primary);
+            border-bottom-color: var(--primary-light);
+        }
+
+        /* ===== IFRAME CONTAINER ===== */
+        .frame-container {
+            flex: 1;
+            position: relative;
+            background: #fff;
+        }
+        .frame-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: none;
+        }
+        .frame-container iframe.active { display: block; }
+
+        /* ===== LOADING ===== */
+        .frame-loading {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #fff;
+            z-index: 5;
+            font-size: 15px;
+            color: #64748b;
+        }
+        .frame-loading .spinner {
+            width: 36px;
+            height: 36px;
+            border: 4px solid #e2e8f0;
+            border-top-color: var(--primary-light);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 12px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ===== ERROR / FALLBACK ===== */
+        .frame-error {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: #fff;
+            z-index: 6;
+            text-align: center;
+            padding: 30px;
+        }
+        .frame-error .error-box {
+            max-width: 480px;
+            background: #fff7ed;
+            border: 1px solid #fdba74;
+            border-radius: 12px;
+            padding: 28px;
+        }
+        .frame-error h3 { color: #c2410c; margin-bottom: 10px; }
+        .frame-error p { color: #7c2d12; font-size: 14px; line-height: 1.6; margin-bottom: 16px; }
+        .btn-open-tab {
+            display: inline-block;
+            background: var(--primary);
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            transition: 0.2s;
+        }
+        .btn-open-tab:hover { background: var(--primary-light); }
+        .btn-open-tab.secondary { background: #64748b; margin-left: 8px; }
+        .btn-open-tab.secondary:hover { background: #475569; }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 640px) {
+            .app-header { padding: 10px 14px; }
+            .app-header .brand { font-size: 16px; }
+            .app-header .subtitle { display: none; }
+            .tab-btn { padding: 12px 14px; font-size: 13px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== HEADER ===== -->
+    <header class="app-header">
+        <div class="brand">
+            <span class="logo">📊</span>
+            <div>
+                <div>Hệ Thống Kế Toán HKD</div>
+                <div class="subtitle">Tổng hợp các công cụ hỗ trợ kế toán hộ kinh doanh</div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ===== TABS NGANG ===== -->
+    <nav class="tab-bar" id="tabBar">
+        <button class="tab-btn active" data-tab="gopHoaDon" data-src="Gộp hóa đơn/index.html">🧾 Gộp hóa đơn</button>
+        <button class="tab-btn" data-tab="thayTheHoaDon" data-src="thay thế hóa đơn/index.html">🔁 Thay thế hóa đơn</button>
+        <button class="tab-btn" data-tab="quanLyHkd" data-src="Quản lý hkd/index.html">🏪 Quản lý HKD</button>
+        <button class="tab-btn" data-tab="taoSoKinhDoanh" data-src="Tao so kinh doanh/index.html">📈 Tạo số kinh doanh</button>
+        <button class="tab-btn" data-tab="doiChieuChungTu" data-src="Đối chiếu chứng từ kế toán/index.html">📋 Đối chiếu chứng từ</button>
+    </nav>
+
+    <!-- ===== IFRAME CONTAINER ===== -->
+    <div class="frame-container" id="frameContainer">
+        <div class="frame-loading" id="loading">
+            <div class="spinner"></div>
+            <span>Đang tải chức năng...</span>
+        </div>
+        <div class="frame-error" id="frameError">
+            <div class="error-box">
+                <h3>⚠️ Không thể hiển thị trong khung</h3>
+                <p id="errorMsg">Trình duyệt chặn hiển thị nội dung này do hạn chế bảo mật khi mở trực tiếp từ file (file://).</p>
+                <a href="#" class="btn-open-tab" id="btnOpenTab" target="_blank" rel="noopener">Mở trong tab mới</a>
+                <a href="#" class="btn-open-tab secondary" id="btnRetry">Thử lại</a>
+            </div>
+        </div>
+        <iframe id="frame-gopHoaDon" data-src="Gộp hóa đơn/index.html" class="active"></iframe>
+        <iframe id="frame-thayTheHoaDon" data-src="thay thế hóa đơn/index.html"></iframe>
+        <iframe id="frame-quanLyHkd" data-src="Quản lý hkd/index.html"></iframe>
+        <iframe id="frame-taoSoKinhDoanh" data-src="Tao so kinh doanh/index.html"></iframe>
+        <iframe id="frame-doiChieuChungTu" data-src="Đối chiếu chứng từ kế toán/index.html"></iframe>
+    </div>
+
+    <script>
+        // ===== TAB SWITCHING =====
+        const tabBar = document.getElementById('tabBar');
+        const loading = document.getElementById('loading');
+        const iframes = Array.from(document.querySelectorAll('.frame-container iframe'));
+
+        // Lazy-load: chỉ set src khi tab được chọn lần đầu (trừ tab đầu tiên)
+        const loadedTabs = new Set(['gopHoaDon']);
+
+        // ===== ERROR / FALLBACK =====
+        const frameError = document.getElementById('frameError');
+        const errorMsg = document.getElementById('errorMsg');
+        const btnOpenTab = document.getElementById('btnOpenTab');
+        const btnRetry = document.getElementById('btnRetry');
+        let currentErrorFrame = null;
+
+        function showError(frame, msg) {
+            currentErrorFrame = frame;
+            errorMsg.textContent = msg;
+            btnOpenTab.href = frame.dataset.src;
+            frameError.style.display = 'flex';
+            loading.style.display = 'none';
+        }
+
+        function hideError() {
+            frameError.style.display = 'none';
+        }
+
+        btnRetry.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (currentErrorFrame) {
+                hideError();
+                loading.style.display = 'flex';
+                currentErrorFrame.src = currentErrorFrame.dataset.src;
+            }
+        });
+
+        // Load tab đầu tiên ngay khi trang sẵn sàng
+        window.addEventListener('DOMContentLoaded', () => {
+            const firstFrame = document.getElementById('frame-gopHoaDon');
+            firstFrame.src = firstFrame.dataset.src;
+        });
+
+        tabBar.addEventListener('click', (e) => {
+            const btn = e.target.closest('.tab-btn');
+            if (!btn) return;
+
+            // Cập nhật active tab
+            tabBar.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            // Cập nhật active iframe
+            const tabName = btn.dataset.tab;
+            iframes.forEach(f => f.classList.remove('active'));
+            const targetFrame = document.getElementById('frame-' + tabName);
+            targetFrame.classList.add('active');
+
+            // Ẩn error khi chuyển tab
+            hideError();
+
+            // Lazy-load nếu chưa load
+            if (!loadedTabs.has(tabName)) {
+                loadedTabs.add(tabName);
+                loading.style.display = 'flex';
+                targetFrame.src = targetFrame.dataset.src;
+            }
+        });
+
+        // Ẩn loading khi iframe đã load xong
+        iframes.forEach(f => {
+            f.addEventListener('load', () => {
+                loading.style.display = 'none';
+                hideError();
+            });
+        });
+
+        // Phát hiện lỗi tải do file:// CORS: nếu iframe load xong nhưng
+        // không thể truy cập nội dung (cross-origin), hiển thị fallback.
+        // Dùng timeout để tránh chặn các trang load chậm.
+        function detectBlocked(frame) {
+            try {
+                // Nếu truy cập được contentDocument nghĩa là cùng origin (file://)
+                // và trang đã load thành công -> không bị chặn
+                if (frame.contentDocument && frame.contentDocument.body) {
+                    return false;
+                }
+            } catch (err) {
+                // Cross-origin: không truy cập được -> có thể bị chặn
+                return true;
+            }
+            return false;
+        }
+
+        // Kiểm tra định kỳ sau khi load để phát hiện trang bị chặn
+        iframes.forEach(f => {
+            f.addEventListener('load', () => {
+                // Chờ một chút để trang kịp render
+                setTimeout(() => {
+                    if (detectBlocked(f) && f.classList.contains('active')) {
+                        showError(f, 'Trình duyệt chặn hiển thị nội dung này do hạn chế bảo mật khi mở trực tiếp từ file (file://). Bạn có thể mở chức năng trong tab mới để sử dụng bình thường.');
+                    }
+                }, 800);
+            });
+        });
+    </script>
+</body>
+</html>

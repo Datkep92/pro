@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đối chiếu Chứng từ</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>📋 Đối chiếu Chứng từ Kế toán</h1>
+
+        <!-- Main Tabs -->
+        <div class="tabs main-tabs">
+            <button class="tab-btn active" onclick="switchMainTab('soSanh')">🔍 So sánh Bảng kê & Hóa đơn</button>
+            <button class="tab-btn" onclick="switchMainTab('doiChieu')">🏦 Đối chiếu Sao kê</button>
+            <button class="tab-btn" onclick="switchMainTab('taoPhieu')">📝 Tạo Phiếu Thu/Chi</button>
+        </div>
+
+        <!-- ==================== TAB 1: SO SÁNH BẢNG KÊ & HÓA ĐƠN ==================== -->
+        <div id="tab-soSanh" class="tab-content active">
+            <!-- Sub-tabs: Bán ra / Mua vào -->
+            <div class="tabs sub-tabs">
+                <button class="tab-btn active" onclick="switchSubTab('soSanh', 'banRa')">📤 Bán ra</button>
+                <button class="tab-btn" onclick="switchSubTab('soSanh', 'muaVao')">📥 Mua vào</button>
+            </div>
+
+            <!-- ==================== SUB-TAB BÁN RA ==================== -->
+            <div id="subtab-soSanh-banRa" class="tab-content active">
+                <div class="upload-section">
+                    <div class="upload-group">
+                        <h3>📁 Import file Bán ra</h3>
+                        <p class="upload-hint">Chọn file bảng kê bán ra và hóa đơn bán ra (hỗ trợ chọn nhiều file cùng lúc)</p>
+
+                        <!-- Drop zone -->
+                        <div id="dropZoneBanRa" class="drop-zone">
+                            <div class="drop-zone-content">
+                                <span class="drop-icon">📂</span>
+                                <span>Kéo thả file vào đây hoặc <strong>Chọn file</strong></span>
+                                <span class="drop-hint">Chấp nhận file .xlsx</span>
+                            </div>
+                            <input type="file" id="fileInputBanRa" accept=".xlsx" multiple style="display:none">
+                        </div>
+
+                        <!-- File list -->
+                        <div id="fileListBanRa" class="file-list">
+                            <div class="file-list-empty">Chưa có file nào được chọn</div>
+                        </div>
+
+                        <button id="btnCompareBanRa" class="btn-compare" onclick="runCompare('banRa')" disabled>
+                            ▶ So sánh Bán ra
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Results -->
+                <div id="result-banRa" class="results" style="display:none;">
+                    <h2>Kết quả so sánh BÁN RA</h2>
+                    <div id="summary-banRa" class="summary"></div>
+                    <div id="detail-banRa" class="detail-table"></div>
+                </div>
+            </div>
+
+            <!-- ==================== SUB-TAB MUA VÀO ==================== -->
+            <div id="subtab-soSanh-muaVao" class="tab-content">
+                <div class="upload-section">
+                    <div class="upload-group">
+                        <h3>📁 Import file Mua vào</h3>
+                        <p class="upload-hint">Chọn file bảng kê mua vào và hóa đơn mua vào (hỗ trợ chọn nhiều file cùng lúc)</p>
+
+                        <!-- Drop zone -->
+                        <div id="dropZoneMuaVao" class="drop-zone">
+                            <div class="drop-zone-content">
+                                <span class="drop-icon">📂</span>
+                                <span>Kéo thả file vào đây hoặc <strong>Chọn file</strong></span>
+                                <span class="drop-hint">Chấp nhận file .xlsx</span>
+                            </div>
+                            <input type="file" id="fileInputMuaVao" accept=".xlsx" multiple style="display:none">
+                        </div>
+
+                        <!-- File list -->
+                        <div id="fileListMuaVao" class="file-list">
+                            <div class="file-list-empty">Chưa có file nào được chọn</div>
+                        </div>
+
+                        <button id="btnCompareMuaVao" class="btn-compare" onclick="runCompare('muaVao')" disabled>
+                            ▶ So sánh Mua vào
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Results -->
+                <div id="result-muaVao" class="results" style="display:none;">
+                    <h2>Kết quả so sánh MUA VÀO</h2>
+                    <div id="summary-muaVao" class="summary"></div>
+                    <div id="detail-muaVao" class="detail-table"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== TAB 2: ĐỐI CHIẾU SAO KÊ ==================== -->
+        <div id="tab-doiChieu" class="tab-content">
+            <div class="upload-section">
+                <div class="upload-group">
+                    <h3>🏦 Đối chiếu Sao kê Ngân hàng</h3>
+                    <p class="upload-hint">Tải lên sao kê ngân hàng và danh sách khách hàng/nhà cung cấp để đối chiếu</p>
+
+                    <!-- Drop zone -->
+                    <div id="dropZoneDoiChieu" class="drop-zone">
+                        <div class="drop-zone-content">
+                            <span class="drop-icon">📂</span>
+                            <span>Kéo thả file vào đây hoặc <strong>Chọn file</strong></span>
+                            <span class="drop-hint">Chấp nhận file .xlsx, .xls (sao kê, danh sách KH, danh sách NCC)</span>
+                        </div>
+                        <input type="file" id="fileInputDoiChieu" accept=".xlsx,.xls" multiple style="display:none">
+                    </div>
+
+                    <!-- File list -->
+                    <div id="fileListDoiChieu" class="file-list">
+                        <div class="file-list-empty">Chưa có file nào được chọn</div>
+                    </div>
+
+                    <button id="btnDoiChieu" class="btn-compare" onclick="runDoiChieu()" disabled>
+                        ▶ Đối chiếu Sao kê
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results -->
+            <div id="result-doiChieu" class="results" style="display:none;">
+                <h2>Kết quả đối chiếu Sao kê</h2>
+                <div id="summary-doiChieu" class="summary"></div>
+                <div id="detail-doiChieu" class="detail-table"></div>
+            </div>
+        </div>
+
+        <!-- ==================== TAB 3: TẠO PHIẾU THU/CHI ==================== -->
+        <div id="tab-taoPhieu" class="tab-content">
+            <div class="upload-section">
+                <div class="upload-group">
+                    <h3>📝 Tạo Phiếu Thu/Chi từ Sao kê</h3>
+                    <p class="upload-hint">Tải lên sao kê ngân hàng, danh sách khách hàng/NCC và mẫu phiếu thu/chi</p>
+
+                    <!-- Drop zone -->
+                    <div id="dropZoneTaoPhieu" class="drop-zone">
+                        <div class="drop-zone-content">
+                            <span class="drop-icon">📂</span>
+                            <span>Kéo thả file vào đây hoặc <strong>Chọn file</strong></span>
+                            <span class="drop-hint">Chấp nhận file .xlsx, .xls (sao kê, KH, NCC, mẫu phiếu thu, mẫu phiếu chi)</span>
+                        </div>
+                        <input type="file" id="fileInputTaoPhieu" accept=".xlsx,.xls" multiple style="display:none">
+                    </div>
+
+                    <!-- File list -->
+                    <div id="fileListTaoPhieu" class="file-list">
+                        <div class="file-list-empty">Chưa có file nào được chọn</div>
+                    </div>
+
+                    <button id="btnTaoPhieu" class="btn-compare" onclick="runTaoPhieu()" disabled>
+                        ▶ Tạo Phiếu Thu/Chi
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results -->
+            <div id="result-taoPhieu" class="results" style="display:none;">
+                <h2>Kết quả tạo Phiếu Thu/Chi</h2>
+                <div id="summary-taoPhieu" class="summary"></div>
+                <div id="detail-taoPhieu" class="detail-table"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="modalOverlay" class="modal-overlay" onclick="closeModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3 id="modalTitle">Chi tiết</h3>
+                <button class="modal-close" onclick="closeModal()">✕</button>
+            </div>
+            <div id="modalBody" class="modal-body"></div>
+        </div>
+    </div>
+
+    <!-- Scripts (thêm timestamp để tránh cache) -->
+    <script src="js/config.js?v=20260720g"></script>
+    <script src="js/utils.js?v=20260720g"></script>
+    <script src="js/fileDetector.js?v=20260720g"></script>
+    <script src="js/dataMerger.js?v=20260720g"></script>
+    <script src="js/parser.js?v=20260720g"></script>
+    <script src="js/comparator.js?v=20260720g"></script>
+    <script src="js/bankStatement.js?v=20260720g"></script>
+    <script src="js/customerVendor.js?v=20260720g"></script>
+    <script src="js/matchingEngine.js?v=20260720g"></script>
+    <script src="js/voucherGenerator.js?v=20260720g"></script>
+    <script src="js/ui.js?v=20260720g"></script>
+</body>
+</html>
