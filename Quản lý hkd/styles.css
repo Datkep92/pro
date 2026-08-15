@@ -1388,6 +1388,12 @@ td a[onclick*="quickEditProductCode"] {
   color: #ea580c;
 }
 
+.tonkho-sidebar-actions .btn-muavao:hover {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+  color: #16a34a;
+}
+
 /* Nội dung tồn kho bên phải */
 .tonkho-content {
   flex: 1;

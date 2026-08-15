@@ -24,7 +24,8 @@ function parseXmlInvoice(xmlContent) {
   const invoiceInfo = {
     title: getText('HDon > DLHDon > TTChung > THDon'),
     template: getText('HDon > DLHDon > TTChung > KHHDon'),
-    symbol: getText('HDon > DLHDon > TTChung > KHMSHDon'),
+    // Ký hiệu hóa đơn nằm ở KHHDon (vd: C25TDB), KHMSHDon chỉ là ký hiệu mẫu (vd: 1)
+    symbol: getText('HDon > DLHDon > TTChung > KHHDon'),
     number: getText('HDon > DLHDon > TTChung > SHDon'),
     date: getText('HDon > DLHDon > TTChung > NLap'),
     paymentMethod: getText('HDon > DLHDon > TTChung > HTTToan'),

@@ -548,6 +548,8 @@ const companyInfo = `
               <input type="file" id="zipFile" accept=".zip" multiple style="display:none;" onchange="handleZipFileChange(event)">
               <button class="btn-misa" onclick="document.getElementById('misaExcelFile').click()" title="Import Excel MISA để đồng bộ mã hàng">📥 Import MISA</button>
               <input type="file" id="misaExcelFile" accept=".xlsx,.xls" style="display:none;" onchange="handleMisaFileChange(event)">
+              <button class="btn-muavao" onclick="document.getElementById('muaVaoExcelFile').click()" title="Import Excel danh sách hóa đơn để so sánh">📥 danh sách hóa đơn excel</button>
+              <input type="file" id="muaVaoExcelFile" accept=".xlsx,.xls" style="display:none;" onchange="handleMuaVaoFileChange(event)">
             </div>
           </div>
           <ul id="businessList"></ul>
@@ -788,6 +790,7 @@ async function initApp() {
   window.mergeDuplicateItems = mergeDuplicateItems;
   window.handleZipFileChange = handleZipFileChange;
   window.handleMisaFileChange = handleMisaFileChange;
+  window.handleMuaVaoFileChange = handleMuaVaoFileChange;
   window.handleFilesFromInput = handleFilesFromInput;
   window.handleXuatKhoFileChange = handleXuatKhoFileChange;
   window.renderXuatKhoTab = renderXuatKhoTab;
