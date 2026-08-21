@@ -181,10 +181,24 @@ function executeMerge(sourceTaxCode) {
   mergeInventoryArray(target, source, 'tonkhoKM');
   mergeInventoryArray(target, source, 'tonkhoCK');
 
-  // 2. Gộp invoices (chuyển toàn bộ, tránh trùng MCCQT)
+  // 2. Gộp invoices (chuyển toàn bộ, tránh trùng).
+  //    Quy tắc: nếu hóa đơn CÓ MCCQT → trùng MCCQT thì bỏ qua.
+  //    Nếu KHÔNG có MCCQT → trùng số hóa đơn với hóa đơn cũng không có MCCQT thì bỏ qua.
   (source.invoices || []).forEach(inv => {
-    const mccqt = inv.invoiceInfo?.mccqt || '';
-    const exists = (target.invoices || []).some(i => (i.invoiceInfo?.mccqt || '') === mccqt);
+    const srcMccqt = (inv.invoiceInfo?.mccqt || '').toUpperCase();
+    const srcNumber = String(inv.invoiceInfo?.number || '').replace(/^0+/, '');
+    let exists = false;
+    if (srcMccqt) {
+      exists = (target.invoices || []).some(i =>
+        (i.invoiceInfo?.mccqt || '').toUpperCase() === srcMccqt
+      );
+    } else if (srcNumber) {
+      exists = (target.invoices || []).some(i => {
+        const tMccqt = (i.invoiceInfo?.mccqt || '').toUpperCase();
+        const tNumber = String(i.invoiceInfo?.number || '').replace(/^0+/, '');
+        return !tMccqt && tNumber === srcNumber;
+      });
+    }
     if (!exists) {
       target.invoices.push(inv);
     }

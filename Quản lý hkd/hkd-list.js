@@ -87,7 +87,7 @@ function renderHKDList() {
                     const diffText = item.hasDiff
                       ? `<span style="color:#e53935;font-weight:bold;font-size:0.85em;"> ⚠️ Chênh lệch: ${item.diffAmount.toLocaleString()}đ</span>`
                       : `<span style="color:#43a047;font-size:0.85em;"> ✅ Khớp</span>`;
-                    return `<li onclick="renderInvoiceDetail('${taxCode}','${item.mccqt}')" ${diffClass}>
+                    return `<li onclick="renderInvoiceDetail('${taxCode}','${item.mccqt}','${item.number || ''}')" ${diffClass}>
                       <div style="font-weight:bold;font-size:0.9em;">📄 ${item.number || item.mccqt}</div>
                       <div style="font-size:0.8em;color:#555;">📅 ${item.date}</div>
                       <div style="font-size:0.8em;margin-top:2px;">

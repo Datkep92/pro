@@ -428,7 +428,7 @@ function renderTonKhoTab(taxCode, type) {
     html += `<tr style="${rowStyle}"><td style="text-align:center;"><input type="checkbox" class="tonkho-checkbox" data-index="${i}" onchange="updateSelectedCount()"></td><td>${i + 1}</td>`;
     // Cột số HĐ clickable
     if (invNumberDisplay) {
-      html += `<td style="text-align:center;"><a href="#" onclick="event.preventDefault(); renderInvoiceDetail('${taxCode}', '${item.mccqt}'); return false;" style="color:#1976d2;text-decoration:underline;cursor:pointer;font-size:0.85em;">${invNumberDisplay}</a></td>`;
+      html += `<td style="text-align:center;"><a href="#" onclick="event.preventDefault(); renderInvoiceDetail('${taxCode}', '${item.mccqt}', '${item.number || ''}'); return false;" style="color:#1976d2;text-decoration:underline;cursor:pointer;font-size:0.85em;">${invNumberDisplay}</a></td>`;
     } else {
       html += `<td style="text-align:center;color:#999;">-</td>`;
     }
@@ -620,7 +620,7 @@ function renderFilteredTonKhoTable(taxCode, type, filtered) {
     html += `<tr><td style="text-align:center;"><input type="checkbox" class="tonkho-checkbox" data-index="${realIndex}" onchange="updateSelectedCount()"></td><td>${i + 1}</td>`;
     // Cột số HĐ clickable
     if (invNumberDisplay) {
-      html += `<td style="text-align:center;"><a href="#" onclick="event.preventDefault(); renderInvoiceDetail('${taxCode}', '${item.mccqt}'); return false;" style="color:#1976d2;text-decoration:underline;cursor:pointer;font-size:0.85em;">${invNumberDisplay}</a></td>`;
+      html += `<td style="text-align:center;"><a href="#" onclick="event.preventDefault(); renderInvoiceDetail('${taxCode}', '${item.mccqt}', '${item.number || ''}'); return false;" style="color:#1976d2;text-decoration:underline;cursor:pointer;font-size:0.85em;">${invNumberDisplay}</a></td>`;
     } else {
       html += `<td style="text-align:center;color:#999;">-</td>`;
     }

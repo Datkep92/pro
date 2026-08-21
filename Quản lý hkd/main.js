@@ -93,11 +93,27 @@ async function handleFilesFromInput(files) {
         hkdData[taxCode].name = name;
       }
 
-      const exists = (hkdData[taxCode]?.invoices || []).some(
-        inv => (inv.invoiceInfo?.mccqt || '') === mccqt
-      );
+      // Quy tắc chống trùng:
+      // - Nếu hóa đơn mới CÓ MCCQT → so sánh theo MCCQT, trùng MCCQT thì bỏ qua.
+      // - Nếu hóa đơn mới KHÔNG có MCCQT → so sánh theo số hóa đơn với các hóa đơn
+      //   cũng KHÔNG có MCCQT; trùng số thì bỏ qua. (Số trùng nhưng có MCCQT vẫn chấp nhận.)
+      const newMccqt = (invoice.invoiceInfo?.mccqt || '').toUpperCase();
+      const newNumber = String(invoice.invoiceInfo?.number || '').replace(/^0+/, '');
+      let exists = false;
+      if (newMccqt) {
+        exists = (hkdData[taxCode]?.invoices || []).some(
+          inv => (inv.invoiceInfo?.mccqt || '').toUpperCase() === newMccqt
+        );
+      } else if (newNumber) {
+        exists = (hkdData[taxCode]?.invoices || []).some(inv => {
+          const invMccqt = (inv.invoiceInfo?.mccqt || '').toUpperCase();
+          const invNumber = String(inv.invoiceInfo?.number || '').replace(/^0+/, '');
+          // Chỉ bỏ qua khi cả hai đều KHÔNG có MCCQT và trùng số hóa đơn
+          return !invMccqt && invNumber === newNumber;
+        });
+      }
       if (exists) {
-        window.showToast(`Bỏ qua MCCQT trùng: ${mccqt}`, 3000, 'info');
+        window.showToast(`Bỏ qua hóa đơn trùng: ${newMccqt || newNumber}`, 3000, 'info');
         processedCount++;
         continue;
       }

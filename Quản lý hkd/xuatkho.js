@@ -266,7 +266,7 @@ function renderXuatKhoTab(taxCode, type) {
 
     html += `<tr style="${rowStyle}"><td style="text-align:center;"><input type="checkbox" class="xuatkho-checkbox" data-index="${i}" data-type="${type}" onchange="updateXuatSelectedCount()"></td><td>${i + 1}</td>`;
     if (invNumberDisplay) {
-      html += `<td style="text-align:center;"><a href="#" onclick="event.preventDefault(); renderInvoiceDetail('${taxCode}', '${item.mccqt}'); return false;" style="color:#1976d2;text-decoration:underline;cursor:pointer;font-size:0.85em;">${invNumberDisplay}</a></td>`;
+      html += `<td style="text-align:center;"><a href="#" onclick="event.preventDefault(); renderInvoiceDetail('${taxCode}', '${item.mccqt}', '${item.number || ''}'); return false;" style="color:#1976d2;text-decoration:underline;cursor:pointer;font-size:0.85em;">${invNumberDisplay}</a></td>`;
     } else {
       html += `<td style="text-align:center;color:#999;">-</td>`;
     }
@@ -498,7 +498,7 @@ function renderFilteredXuatKhoTable(taxCode, type, filtered) {
 
     html += `<tr style="${rowStyle}"><td style="text-align:center;"><input type="checkbox" class="xuatkho-checkbox" data-index="${idx}" data-type="${type}" onchange="updateXuatSelectedCount()"></td><td>${idx + 1}</td>`;
     if (invNumberDisplay) {
-      html += `<td style="text-align:center;"><a href="#" onclick="event.preventDefault(); renderInvoiceDetail('${taxCode}', '${item.mccqt}'); return false;" style="color:#1976d2;text-decoration:underline;cursor:pointer;font-size:0.85em;">${invNumberDisplay}</a></td>`;
+      html += `<td style="text-align:center;"><a href="#" onclick="event.preventDefault(); renderInvoiceDetail('${taxCode}', '${item.mccqt}', '${item.number || ''}'); return false;" style="color:#1976d2;text-decoration:underline;cursor:pointer;font-size:0.85em;">${invNumberDisplay}</a></td>`;
     } else {
       html += `<td style="text-align:center;color:#999;">-</td>`;
     }

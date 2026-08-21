@@ -8,13 +8,22 @@
  * - Bảng phải: XML Tree View chuyên nghiệp (có expand/collapse)
  * So sánh từng dòng để phát hiện chênh lệch
  */
-function renderInvoiceDetail(taxCode, mccqt) {
+function renderInvoiceDetail(taxCode, mccqt, number) {
   const hkd = hkdData[taxCode];
   if (!hkd || !Array.isArray(hkd.invoices)) return;
 
-  const invoice = hkd.invoices.find(inv => inv.invoiceInfo?.mccqt === mccqt);
+  // Tìm hóa đơn: ưu tiên theo MCCQT (nếu có), ngược lại theo số hóa đơn.
+  // Nhiều file ZIP không có mã MCCQT → mccqt rỗng → phải dựa vào số hóa đơn.
+  let invoice;
+  if (mccqt) {
+    invoice = hkd.invoices.find(inv => inv.invoiceInfo?.mccqt === mccqt);
+  }
+  if (!invoice && number) {
+    const num = String(number).replace(/^0+/, '');
+    invoice = hkd.invoices.find(inv => String(inv.invoiceInfo?.number || '').replace(/^0+/, '') === num);
+  }
   if (!invoice) {
-    showToast(`❌ Không tìm thấy hóa đơn ${mccqt}`, 2000, 'error');
+    showToast(`❌ Không tìm thấy hóa đơn ${mccqt || number}`, 2000, 'error');
     return;
   }
   // Lưu invoice hiện tại để các hàm global có thể truy cập
