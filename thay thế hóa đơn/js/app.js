@@ -369,11 +369,15 @@ function buildHoaDonThayTheData() {
                 row[1] = hd.ngay;
                 // Cột 6: Người mua hàng - để "BÁN CHO NGƯỜI TIÊU DÙNG"
                 row[5] = 'BÁN CHO NGƯỜI TIÊU DÙNG';
+                // Cột 10: Hình thức thanh toán (*) - mặc định "Tiền Mặt"
+                row[9] = 'Tiền Mặt';
+                // Cột 12: Ký hiệu HĐ bị thay thế (*) - mặc định "1C26MKT"
+                row[11] = '1C26MKT';
                 // Cột 13: Số hóa đơn bị thay thế
                 row[12] = hd.soHoaDon;
                 // Cột 14: Ngày hóa đơn bị thay thế
                 row[13] = hd.ngay;
-                // Các cột 3-5, 7-12, 15 để trống (người dùng tự nhập)
+                // Các cột 3-5, 7-9, 15 để trống (người dùng tự nhập)
             }
 
             // Cột 16: Tên hàng hóa/dịch vụ
