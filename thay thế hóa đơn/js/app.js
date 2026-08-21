@@ -382,15 +382,43 @@ function buildHoaDonThayTheData() {
             row[16] = d.donViTinh;
             // Cột 18: Số lượng
             row[17] = d.soLuong;
-            // Cột 19: Đơn giá
-            row[18] = d.donGia;
-            // Cột 20: Thành tiền
-            row[19] = d.thanhTien;
-            // Cột 21: Thuế suất GTGT (%) - dùng thuế suất chuẩn
-            row[20] = d.thueSuatChuan !== null ? d.thueSuatChuan : '';
-            // Cột 22: Tiền thuế GTGT - tính lại theo thuế suất chuẩn
-            if (d.thueSuatChuan !== null) {
-                row[21] = Math.round(d.thanhTien * d.thueSuatChuan / 100);
+
+            // Tính toán giá bán theo logic: GIỮ GIÁ BÁN ĐÃ CÓ THUẾ (tổng tiền) cố định
+            // và điều chỉnh đơn giá + thành tiền trước thuế theo thuế suất chuẩn (8%/10%)
+            // Chỉ điều chỉnh khi thuế suất lệch nhau đáng kể (cùng ngưỡng với logic phát hiện sai)
+            const thueLech = d.thueSuatChuan !== null ? Math.abs(d.thueSuatTinhDuoc - d.thueSuatChuan) : 0;
+            if (d.thueSuatChuan !== null && thueLech > 0.5) {
+                // Tổng tiền gốc (giá bán đã có thuế) - giữ nguyên
+                const tongTienGoc = d.thanhTien + d.thueGTGT;
+                // Thành tiền mới = Tổng tiền / (1 + thuế suất chuẩn/100)
+                const thanhTienMoi = tongTienGoc / (1 + d.thueSuatChuan / 100);
+                // Làm tròn thành tiền về số nguyên
+                const thanhTienLamTron = Math.round(thanhTienMoi);
+                // Tiền thuế mới = Tổng tiền - Thành tiền (đảm bảo tổng khớp chính xác)
+                const thueMoi = tongTienGoc - thanhTienLamTron;
+                // Đơn giá mới = Thành tiền / Số lượng (làm tròn 2 chữ số thập phân)
+                const donGiaMoi = d.soLuong > 0 ? Math.round((thanhTienLamTron / d.soLuong) * 100) / 100 : 0;
+
+                // Cột 19: Đơn giá mới
+                row[18] = donGiaMoi;
+                // Cột 20: Thành tiền mới
+                row[19] = thanhTienLamTron;
+                // Cột 21: Thuế suất chuẩn
+                row[20] = d.thueSuatChuan;
+                // Cột 22: Tiền thuế mới
+                row[21] = thueMoi;
+            } else {
+                // Thuế suất không đổi (hoặc không có trong danh sách) -> giữ nguyên
+                // Cột 19: Đơn giá
+                row[18] = d.donGia;
+                // Cột 20: Thành tiền
+                row[19] = d.thanhTien;
+                // Cột 21: Thuế suất GTGT (%)
+                row[20] = d.thueSuatChuan !== null ? d.thueSuatChuan : '';
+                // Cột 22: Tiền thuế GTGT
+                if (d.thueSuatChuan !== null) {
+                    row[21] = Math.round(d.thanhTien * d.thueSuatChuan / 100);
+                }
             }
 
             data.push(row);
