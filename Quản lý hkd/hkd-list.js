@@ -76,6 +76,7 @@ function renderHKDList() {
       <div style="display:flex; gap:4px; margin-top:6px;">
         <button onclick="toggleInvoiceList('${taxCode}','${sidebarPrefix}')" style="flex:1; font-size:0.8em; padding:4px 6px;">📄 Hóa đơn</button>
         <button onclick="openMergePopup('${taxCode}')" style="flex:1; font-size:0.8em; padding:4px 6px; background:#ff9800; color:white; border:none; border-radius:4px; cursor:pointer;">🔗 Gộp</button>
+        <button onclick="deleteHKD('${taxCode}')" style="flex:1; font-size:0.8em; padding:4px 6px; background:#e53935; color:white; border:none; border-radius:4px; cursor:pointer;">🗑️ Xóa</button>
       </div>
       <ul id="${idList}" style="display:none; list-style:none; padding:4px 0 4px 8px; margin:4px 0 0 0;">
         ${
@@ -143,4 +144,55 @@ function toggleInvoiceList(taxCode, sidebarPrefix = 'tonkho') {
 
   const isHidden = list.style.display === 'none' || !list.style.display;
   list.style.display = isHidden ? 'block' : 'none';
+}
+
+/**
+ * Xóa một HKD khỏi hệ thống (dữ liệu, thứ tự, giao diện).
+ * @param {string} taxCode - Mã số thuế của HKD cần xóa
+ */
+function deleteHKD(taxCode) {
+  const hkd = hkdData[taxCode];
+  const name = hkd?.name || taxCode;
+
+  if (!confirm(`⚠️ Xác nhận xóa HKD:\n\n${name}\n(${taxCode})\n\nToàn bộ dữ liệu tồn kho, xuất hàng và hóa đơn của HKD này sẽ bị xóa vĩnh viễn!\n\nBạn có chắc chắn muốn xóa?`)) {
+    return;
+  }
+
+  // Xóa dữ liệu HKD
+  delete hkdData[taxCode];
+
+  // Xóa khỏi danh sách thứ tự
+  if (Array.isArray(hkdOrder)) {
+    hkdOrder = hkdOrder.filter(tc => tc !== taxCode);
+  }
+
+  // Nếu đang chọn HKD bị xóa → reset về trạng thái chưa chọn
+  if (typeof currentTaxCode !== 'undefined' && currentTaxCode === taxCode) {
+    currentTaxCode = '';
+  }
+
+  // Lưu và render lại
+  if (typeof window.saveDataToLocalStorage === 'function') window.saveDataToLocalStorage();
+  if (typeof window.logAction === 'function') window.logAction(`Xóa HKD ${taxCode}`, { taxCode, name });
+  window.renderHKDList();
+
+  // Reset giao diện chi tiết:
+  // - Nếu còn HKD khác → chọn HKD đầu tiên còn lại.
+  // - Nếu không còn HKD nào → xóa sạch vùng chi tiết (KHÔNG gọi renderHKDTab('')
+  //   vì hàm này sẽ tạo HKD rác qua ensureHkdData('')).
+  const remaining = Array.isArray(hkdOrder) ? hkdOrder.filter(tc => hkdData[tc]) : [];
+  if (remaining.length > 0) {
+    currentTaxCode = remaining[0];
+    if (typeof window.renderHKDTab === 'function') {
+      window.renderHKDTab(currentTaxCode);
+    }
+  } else {
+    currentTaxCode = '';
+    const infoEl = document.getElementById('hkdInfo');
+    if (infoEl) infoEl.innerHTML = '';
+  }
+
+  if (typeof window.showToast === 'function') {
+    window.showToast(`Đã xóa HKD ${name}`, 3000, 'success');
+  }
 }
