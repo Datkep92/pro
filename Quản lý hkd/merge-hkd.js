@@ -182,22 +182,15 @@ function executeMerge(sourceTaxCode) {
   mergeInventoryArray(target, source, 'tonkhoCK');
 
   // 2. Gộp invoices (chuyển toàn bộ, tránh trùng).
-  //    Quy tắc: nếu hóa đơn CÓ MCCQT → trùng MCCQT thì bỏ qua.
-  //    Nếu KHÔNG có MCCQT → trùng số hóa đơn với hóa đơn cũng không có MCCQT thì bỏ qua.
+  //    Quy tắc: KHÔNG dùng riêng số hóa đơn.
+  //    Khóa hóa đơn = MST người bán | mẫu số | ký hiệu | số hóa đơn.
   (source.invoices || []).forEach(inv => {
-    const srcMccqt = (inv.invoiceInfo?.mccqt || '').toUpperCase();
-    const srcNumber = String(inv.invoiceInfo?.number || '').replace(/^0+/, '');
+    const srcKey = window.getInvoiceDupKey(inv, targetTaxCode);
     let exists = false;
-    if (srcMccqt) {
+    if (srcKey) {
       exists = (target.invoices || []).some(i =>
-        (i.invoiceInfo?.mccqt || '').toUpperCase() === srcMccqt
+        window.getInvoiceDupKey(i, targetTaxCode) === srcKey
       );
-    } else if (srcNumber) {
-      exists = (target.invoices || []).some(i => {
-        const tMccqt = (i.invoiceInfo?.mccqt || '').toUpperCase();
-        const tNumber = String(i.invoiceInfo?.number || '').replace(/^0+/, '');
-        return !tMccqt && tNumber === srcNumber;
-      });
     }
     if (!exists) {
       target.invoices.push(inv);

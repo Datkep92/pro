@@ -23,8 +23,9 @@ function parseXmlInvoice(xmlContent) {
 
   const invoiceInfo = {
     title: getText('HDon > DLHDon > TTChung > THDon'),
-    template: getText('HDon > DLHDon > TTChung > KHHDon'),
-    // Ký hiệu hóa đơn nằm ở KHHDon (vd: C25TDB), KHMSHDon chỉ là ký hiệu mẫu (vd: 1)
+    // Mẫu số (ký hiệu mẫu số hóa đơn, vd "1") nằm ở KHMSHDon
+    template: getText('HDon > DLHDon > TTChung > KHMSHDon'),
+    // Ký hiệu hóa đơn nằm ở KHHDon (vd: C25TDB)
     symbol: getText('HDon > DLHDon > TTChung > KHHDon'),
     number: getText('HDon > DLHDon > TTChung > SHDon'),
     date: getText('HDon > DLHDon > TTChung > NLap'),
@@ -196,6 +197,9 @@ async function extractInvoiceFromZip(file) {
     const invoice = {
       invoiceInfo: {
         mccqt: getText('MCCQT') || getText('MaCQT'),
+        // Mẫu số + ký hiệu cần cho logic chống trùng (KHÔNG dựa riêng số hóa đơn)
+        template: getText('KHMSHDon'),
+        symbol: getText('KHHDon'),
         number: getText('SHDon'),
         date: getText('NLap')
       },
@@ -216,6 +220,30 @@ async function extractInvoiceFromZip(file) {
     console.error('Lỗi đọc ZIP:', err);
     window.showToast(`Lỗi đọc ZIP: ${file.name}`, 'error');
     return null;
+  }
+}
+
+// TƯƠNG THÍCH DỮ LIỆU CŨ:
+// Các hóa đơn nhập trước đây lưu nhầm template = ký hiệu (KHHDon), nên "mẫu số"
+// bị trùng với "ký hiệu". Hàm này khôi phục mẫu số (KHMSHDon) từ rawXml đã lưu
+// để khóa chống trùng đồng nhất giữa dữ liệu CŨ và MỚI (không làm mất dữ liệu).
+function backfillInvoiceTemplate(invoice) {
+  try {
+    if (!invoice || !invoice.invoiceInfo || !invoice.rawXml) return;
+    const info = invoice.invoiceInfo;
+    // Chỉ xử lý bản ghi cũ: template trùng symbol (đều là ký hiệu KHHDon)
+    if (!info.symbol || info.template !== info.symbol) return;
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(invoice.rawXml, 'text/xml');
+    const node = doc.querySelector('HDon > DLHDon > TTChung > KHMSHDon')
+      || doc.querySelector('KHMSHDon');
+    const mauSo = node ? node.textContent.trim() : '';
+    if (mauSo !== info.template) {
+      info.template = mauSo; // có thể là '' nếu XML cũ không có KHMSHDon
+    }
+  } catch (e) {
+    // Bỏ qua lỗi, giữ nguyên dữ liệu cũ
+    console.warn('backfillInvoiceTemplate lỗi:', e);
   }
 }
 

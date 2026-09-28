@@ -161,6 +161,22 @@
         });
     }
 
+    // Khóa nhận diện hóa đơn để chống trùng — KHÔNG dùng riêng "Số hóa đơn".
+    // Khóa = MST người bán | Ký hiệu mẫu số | Ký hiệu hóa đơn | Số hóa đơn
+    //   - Cùng số nhưng khác mẫu số  -> KHÔNG trùng
+    //   - Cùng mẫu số + ký hiệu + số trong cùng MST -> trùng
+    //   - Khác MST -> KHÔNG trùng
+    function makeInvoiceKey(row) {
+        if (!row) return '';
+        const s = v => String(v == null ? '' : v).trim().toUpperCase();
+        const mst = s(row['MST người bán/MST người xuất hàng']);
+        const mauSo = s(row['Ký hiệu mẫu số']);
+        const kyHieu = s(row['Ký hiệu hóa đơn']);
+        const soHD = String(row['Số hóa đơn'] == null ? '' : row['Số hóa đơn']).trim().replace(/^0+/, '');
+        if (!soHD) return ''; // thiếu số hóa đơn -> không đủ dữ liệu để kết luận trùng
+        return [mst, mauSo, kyHieu, soHD].join('|');
+    }
+
     function renderUI() {
         // Đánh lại STT liên tục
         allData.forEach((d, i) => d['STT'] = i + 1);
@@ -168,8 +184,8 @@
         document.getElementById('countFiles').innerText = fileCount;
         document.getElementById('countRows').innerText = allData.length;
         
-        // Thống kê số lượng hóa đơn duy nhất
-        const uniqueInvoices = new Set(allData.map(d => d['Số hóa đơn']).filter(s => s));
+        // Thống kê số lượng hóa đơn duy nhất (theo khóa: MST + mẫu số + ký hiệu + số HĐ)
+        const uniqueInvoices = new Set(allData.map(makeInvoiceKey).filter(Boolean));
         document.getElementById('countInvoices').innerText = uniqueInvoices.size;
 
         let total = 0;

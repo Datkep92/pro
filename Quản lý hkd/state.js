@@ -20,6 +20,11 @@ function migrateHkdData(taxCode) {
   if (!hkd.xuatkhoMain) hkd.xuatkhoMain = [];
   if (!hkd.xuatkhoKM) hkd.xuatkhoKM = [];
   if (!hkd.xuatkhoCK) hkd.xuatkhoCK = [];
+  // Tương thích dữ liệu cũ: khôi phục "mẫu số" cho hóa đơn cũ (nếu có rawXml)
+  // để khóa chống trùng khớp giữa hóa đơn cũ và hóa đơn nhập lại.
+  if (typeof window !== 'undefined' && typeof window.backfillInvoiceTemplate === 'function' && Array.isArray(hkd.invoices)) {
+    hkd.invoices.forEach(window.backfillInvoiceTemplate);
+  }
 }
 
 function safeParseInt(value, defaultValue = 0) {
