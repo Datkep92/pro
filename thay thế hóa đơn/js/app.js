@@ -424,6 +424,9 @@ function extractYearFromDate(value) {
 function buildHoaDonThayTheData() {
     const data = [];
 
+    // Ngày lập hóa đơn thay thế = NGÀY HIỆN TẠI (dùng chung cho cả file)
+    const ngayLap = new Date();
+
     // Dữ liệu hóa đơn thay thế (bắt đầu từ dòng 10 của file mẫu)
     let stt = 1;
     hoaDonSaiList.forEach(hd => {
@@ -435,8 +438,8 @@ function buildHoaDonThayTheData() {
 
             // Dòng đầu tiên của hóa đơn: điền thông tin hóa đơn
             if (idx === 0) {
-                // Cột 2: Ngày hóa đơn
-                row[1] = hd.ngay;
+                // Cột 2: Ngày hóa đơn = NGÀY HIỆN TẠI (ngày lập hóa đơn thay thế)
+                row[1] = ngayLap;
                 // Cột 6: Người mua hàng - để "BÁN CHO NGƯỜI TIÊU DÙNG"
                 row[5] = 'BÁN CHO NGƯỜI TIÊU DÙNG';
                 // Cột 10: Hình thức thanh toán (*) - mặc định "Tiền Mặt"

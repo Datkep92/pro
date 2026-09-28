@@ -149,7 +149,15 @@ function downloadExcelFromTemplate(mauWorkbook, mauSheetName, dataRows, filename
         row.forEach((val, c) => {
             if (val !== '' && val !== undefined && val !== null) {
                 const addr = XLSX.utils.encode_cell({ r: r, c: c });
-                ws[addr] = { t: typeof val === 'number' ? 'n' : 's', v: val };
+                if (val instanceof Date && !isNaN(val.getTime())) {
+                    // Ô ngày: ghi dạng số serial + định dạng ngày để Excel hiểu là NGÀY
+                    const serial = Math.round(
+                        (Date.UTC(val.getFullYear(), val.getMonth(), val.getDate()) - Date.UTC(1899, 11, 30)) / 86400000
+                    );
+                    ws[addr] = { t: 'n', v: serial, z: 'dd/mm/yyyy' };
+                } else {
+                    ws[addr] = { t: typeof val === 'number' ? 'n' : 's', v: val };
+                }
             }
         });
     });
