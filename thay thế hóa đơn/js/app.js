@@ -347,6 +347,76 @@ function handleTaiFile() {
     alert(`Đã tạo file hóa đơn thay thế cho ${hoaDonSaiList.length} hóa đơn!`);
 }
 
+// ===== Suy ra "Ký hiệu HĐ bị thay thế" theo NĂM của ngày hóa đơn bị thay thế =====
+// Quy ước: 1C<YY>MKT  (YY = 2 chữ số cuối của năm)
+//   Ngày hóa đơn bị thay thế năm 2026 -> 1C26MKT
+//   Ngày hóa đơn bị thay thế năm 2025 -> 1C25MKT
+function buildKyHieuHDBiThayThe(ngay) {
+    const year = extractYearFromDate(ngay);
+    if (year === null || isNaN(year)) return '';
+    const yy = String(((year % 100) + 100) % 100).padStart(2, '0');
+    return '1C' + yy + 'MKT';
+}
+
+/**
+ * Lấy năm từ nhiều dạng ngày khác nhau:
+ *  - Excel serial number (sheet_to_json mặc định trả về số cho ô ngày)
+ *  - Đối tượng Date
+ *  - Chuỗi "dd/mm/yyyy", "yyyy-mm-dd", "dd-mm-yy", ...
+ * Trả về null nếu không xác định được.
+ */
+function extractYearFromDate(value) {
+    if (value === null || value === undefined || value === '') return null;
+
+    // 1) Đối tượng Date
+    if (value instanceof Date && !isNaN(value.getTime())) {
+        return value.getFullYear();
+    }
+
+    // 2) Chuỗi số thuần: có thể là Excel serial ("46004") hoặc năm ("2025")
+    //    (code cũ đã String(row[0]) nên ngày serial bị thành chuỗi)
+    if (typeof value === 'string') {
+        const t = value.trim();
+        if (/^\d+(\.\d+)?$/.test(t)) {
+            return extractYearFromDate(parseFloat(t));
+        }
+    }
+
+    // 3) Số: Excel serial date hoặc năm 4 chữ số
+    if (typeof value === 'number' && isFinite(value)) {
+        if (value > 10000 && value < 80000) { // ~1927..2119
+            const ms = Math.round((value - 25569) * 86400 * 1000); // 25569 = 1970-01-01
+            const d = new Date(ms);
+            if (!isNaN(d.getTime())) return d.getUTCFullYear();
+        }
+        if (value >= 1900 && value <= 2999) return Math.floor(value);
+        return null;
+    }
+
+    const s = String(value).trim();
+
+    // 4) "yyyy-mm-dd" / "yyyy/mm/dd" / "yyyy.mm.dd"
+    let m = s.match(/^(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})/);
+    if (m) return parseInt(m[1], 10);
+
+    // 5) "dd/mm/yyyy" (kiểu VN)
+    m = s.match(/(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})/);
+    if (m) return parseInt(m[3], 10);
+
+    // 6) "dd/mm/yy"
+    m = s.match(/(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2})(?!\d)/);
+    if (m) {
+        const y = parseInt(m[3], 10);
+        return y < 100 ? 2000 + y : y;
+    }
+
+    // 7) Chuỗi có cụm 4 chữ số là năm
+    m = s.match(/\b(\d{4})\b/);
+    if (m) return parseInt(m[1], 10);
+
+    return null;
+}
+
 /**
  * Xây dựng dữ liệu hóa đơn thay thế (chỉ phần dữ liệu, bắt đầu từ dòng 10)
  * Cấu trúc 22 cột theo file mẫu gốc
@@ -371,8 +441,9 @@ function buildHoaDonThayTheData() {
                 row[5] = 'BÁN CHO NGƯỜI TIÊU DÙNG';
                 // Cột 10: Hình thức thanh toán (*) - mặc định "Tiền Mặt"
                 row[9] = 'Tiền Mặt';
-                // Cột 12: Ký hiệu HĐ bị thay thế (*) - mặc định "1C26MKT"
-                row[11] = '1C26MKT';
+                // Cột 12: Ký hiệu HĐ bị thay thế (*) - suy từ NĂM của ngày HĐ bị thay thế
+                // (1C + YY + MKT: 2026 -> 1C26MKT, 2025 -> 1C25MKT)
+                row[11] = buildKyHieuHDBiThayThe(hd.ngay);
                 // Cột 13: Số hóa đơn bị thay thế
                 row[12] = hd.soHoaDon;
                 // Cột 14: Ngày hóa đơn bị thay thế
